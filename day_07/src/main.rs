@@ -31,16 +31,12 @@ fn part2(numbers: &[i32]) -> i32 {
     let min = *numbers.iter().min().unwrap();
     let max = *numbers.iter().max().unwrap();
 
-    let mut min_fuel = i32::MAX;
-
-    for pos in min..=max {
+    (min..=max).fold(i32::MAX, |acc, pos| {
         let cost = numbers
             .iter()
             .map(|n| (n - pos).abs())
             .map(|cost| cost * (cost + 1) / 2)
             .sum();
-        min_fuel = min_fuel.min(cost);
-    }
-
-    min_fuel
+        acc.min(cost)
+    })
 }

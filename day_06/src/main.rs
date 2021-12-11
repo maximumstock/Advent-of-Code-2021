@@ -24,8 +24,7 @@ fn solve(numbers: &[usize], iterations: usize) -> usize {
             arr.swap(idx, idx + 1);
         }
 
-        let oldest_fish = arr[8];
-        arr[6] += oldest_fish;
+        arr[6] += arr[8];
     }
 
     arr.iter().sum()

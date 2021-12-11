@@ -43,74 +43,63 @@ struct Line {
 impl Line {
     fn solve(&mut self) -> usize {
         self.inputs.sort_by_key(|a| a.len());
+
         let one = self.inputs.get(0).unwrap();
         let seven = self.inputs.get(1).unwrap();
         let four = self.inputs.get(2).unwrap();
         let eight = self.inputs.get(9).unwrap();
 
-        let mut annotation = Annotation::default();
+        let fives = self
+            .inputs
+            .iter()
+            .filter(|i| i.len() == 5)
+            .collect::<Vec<_>>();
 
-        // Annotate 1
-        for c in one.chars() {
-            annotation.top_right.push(c);
-            annotation.bottom_right.push(c);
-        }
+        let sixes = self
+            .inputs
+            .iter()
+            .filter(|i| i.len() == 6)
+            .collect::<Vec<_>>();
 
-        // Annotate top
-        let top_segment = left_str_minus_right_str(seven, one);
-        annotation.top.extend(top_segment);
+        let three = fives
+            .iter()
+            .find(|s| one.chars().all(|c| s.contains(c)))
+            .unwrap();
 
-        // Annotate 4 -> top_left, middle
-        let four_extra_segments = left_str_minus_right_str(four, seven);
-        for c in four_extra_segments {
-            annotation.top_left.push(c);
-            annotation.middle.push(c);
-        }
+        let nine = sixes
+            .iter()
+            .find(|s| seven.chars().chain(four.chars()).all(|c| s.contains(c)))
+            .unwrap();
 
-        // Annotate 8 -> bottom_left, bottom_middle
-        let mut four_plus_seven = four.clone();
-        four_plus_seven.push_str(seven);
-        let eight_extra_segments = left_str_minus_right_str(eight, &four_plus_seven);
-        for c in eight_extra_segments {
-            annotation.bottom_left.push(c);
-            annotation.bottom.push(c);
-        }
+        let six = sixes
+            .iter()
+            .find(|s| s.ne(&nine) && !one.chars().all(|c| s.contains(c)))
+            .unwrap();
 
-        let permutations = annotation.permutations();
+        let zero = sixes.iter().find(|s| s.ne(&nine) && s.ne(&six)).unwrap();
 
-        let mut winner_mapping = HashMap::default();
-        'outer: for p in permutations {
-            let mut mapping = HashMap::new();
-            for input in &self.inputs[3..=8] {
-                if p.is_two(input) {
-                    mapping.insert(input, 2);
-                } else if p.is_three(input) {
-                    mapping.insert(input, 3);
-                } else if p.is_five(input) {
-                    mapping.insert(input, 5);
-                } else if p.is_six(input) {
-                    mapping.insert(input, 6);
-                } else if p.is_nine(input) {
-                    mapping.insert(input, 9);
-                } else if p.is_zero(input) {
-                    mapping.insert(input, 0);
-                }
-            }
+        let five = fives
+            .iter()
+            .find(|s| left_str_minus_right_str(six, s).len() == 1)
+            .unwrap();
 
-            if mapping.len() == 6 {
-                mapping.insert(one, 1);
-                mapping.insert(seven, 7);
-                mapping.insert(four, 4);
-                mapping.insert(eight, 8);
+        let two = fives.iter().find(|s| s.ne(&three) && s.ne(&five)).unwrap();
 
-                winner_mapping = mapping;
-                break 'outer;
-            }
-        }
+        let mut mapping: HashMap<&String, usize> = HashMap::new();
+        mapping.insert(zero, 0);
+        mapping.insert(one, 1);
+        mapping.insert(two, 2);
+        mapping.insert(three, 3);
+        mapping.insert(four, 4);
+        mapping.insert(five, 5);
+        mapping.insert(six, 6);
+        mapping.insert(seven, 7);
+        mapping.insert(eight, 8);
+        mapping.insert(nine, 9);
 
         self.outputs
             .iter()
-            .flat_map(|o| winner_mapping.get(o))
+            .flat_map(|o| mapping.get(o))
             .fold(0, |acc, next| acc * 10 + next)
     }
 }
@@ -145,166 +134,8 @@ impl FromStr for Line {
     }
 }
 
-#[derive(Debug, Default)]
-struct Annotation {
-    top: Vec<char>,
-    middle: Vec<char>,
-    bottom: Vec<char>,
-    top_left: Vec<char>,
-    bottom_left: Vec<char>,
-    top_right: Vec<char>,
-    bottom_right: Vec<char>,
-}
-
-#[derive(Debug)]
-struct Permutation {
-    top: char,
-    middle: char,
-    bottom: char,
-    top_left: char,
-    bottom_left: char,
-    top_right: char,
-    bottom_right: char,
-}
-
-impl Permutation {
-    fn is_two(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_right,
-                self.middle,
-                self.bottom_left,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn is_three(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_right,
-                self.middle,
-                self.bottom_right,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn is_five(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_left,
-                self.middle,
-                self.bottom_right,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn is_six(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_left,
-                self.middle,
-                self.bottom_right,
-                self.bottom_left,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn is_nine(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_left,
-                self.top_right,
-                self.middle,
-                self.bottom_right,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn is_zero(&self, input: &str) -> bool {
-        Self::check(
-            &[
-                self.top,
-                self.top_left,
-                self.top_right,
-                self.bottom_right,
-                self.bottom_left,
-                self.bottom,
-            ],
-            input,
-        )
-    }
-
-    fn check(haystack: &[char], needle: &str) -> bool {
-        needle.chars().all(|c| haystack.iter().any(|h| h.eq(&c)))
-    }
-}
-
-impl Annotation {
-    fn permutations(&self) -> Vec<Permutation> {
-        let mut permutations = vec![];
-
-        for top in &self.top {
-            for top_left in &self.top_left {
-                for top_right in &self.top_right {
-                    for middle in &self.middle {
-                        for bottom_left in &self.bottom_left {
-                            for bottom_right in &self.bottom_right {
-                                for bottom in &self.bottom {
-                                    permutations.push(Permutation {
-                                        top: *top,
-                                        top_left: *top_left,
-                                        top_right: *top_right,
-                                        bottom: *bottom,
-                                        bottom_left: *bottom_left,
-                                        bottom_right: *bottom_right,
-                                        middle: *middle,
-                                    })
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        permutations
-    }
-}
-
 fn sort_str(input: &str) -> String {
     let mut chars = input.chars().collect::<Vec<_>>();
     chars.sort_unstable();
     chars.iter().collect::<String>()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::str::FromStr;
-
-    use crate::Line;
-
-    #[test]
-    fn test_solve() {
-        let mut line = Line::from_str(
-            "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf",
-        )
-        .unwrap();
-
-        assert_eq!(line.solve(), 5353);
-    }
 }
