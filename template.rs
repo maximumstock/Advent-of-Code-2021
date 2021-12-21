@@ -17,9 +17,16 @@ fn parse_input(input: &str) -> HashMap<(isize, isize), u32> {
         .lines()
         .enumerate()
         .flat_map(|(row, line)| {
-            line.chars()
+            line.trim()
+                .chars()
                 .enumerate()
-                .map(move |(col, c)| ((row as isize, col as isize), c.to_digit(10).unwrap()))
+                .map(move |(col, c)| ((col as isize, row as isize), c.to_digit(10).unwrap()))
         })
         .collect::<HashMap<_, _>>()
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test() {}
 }
