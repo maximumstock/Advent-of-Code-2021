@@ -18,11 +18,7 @@ fn sum_version_numbers(root_packet: &Packet) -> usize {
     match root_packet {
         Packet::Literal(l) => l.version as usize,
         Packet::Operation(op) => {
-            op.subpackets
-                .iter()
-                .map(|p| sum_version_numbers(p))
-                .sum::<usize>()
-                + op.version as usize
+            op.subpackets.iter().map(sum_version_numbers).sum::<usize>() + op.version as usize
         }
     }
 }
@@ -31,7 +27,7 @@ fn evaluate_packet(packet: &Packet) -> usize {
     match packet {
         Packet::Literal(l) => l.literal,
         Packet::Operation(op) => {
-            let mut it = op.subpackets.iter().map(|subp| evaluate_packet(subp));
+            let mut it = op.subpackets.iter().map(evaluate_packet);
             match op.type_id {
                 0 => it.sum::<usize>(),
                 1 => it.product::<usize>(),
@@ -91,12 +87,12 @@ struct Literal {
     literal: usize,
 }
 
-fn parse_packet(mut raw_packet: &mut Vec<char>) -> Packet {
-    let version = take_n(&mut raw_packet, 3);
-    let type_id = take_n(&mut raw_packet, 3);
+fn parse_packet(raw_packet: &mut Vec<char>) -> Packet {
+    let version = take_n(raw_packet, 3);
+    let type_id = take_n(raw_packet, 3);
     if type_id == 4 {
         // literal value packet
-        let literal = parse_literal(&mut raw_packet);
+        let literal = parse_literal(raw_packet);
         Packet::Literal(Literal {
             version,
             type_id,
@@ -104,11 +100,11 @@ fn parse_packet(mut raw_packet: &mut Vec<char>) -> Packet {
         })
     } else {
         // operator packet
-        let length_type_id = take_n(&mut raw_packet, 1);
+        let length_type_id = take_n(raw_packet, 1);
         if length_type_id == 0 {
             // parse total length operator packet
-            let n_bits = take_n(&mut raw_packet, 15);
-            let packets = parse_n_bits(&mut raw_packet, n_bits);
+            let n_bits = take_n(raw_packet, 15);
+            let packets = parse_n_bits(raw_packet, n_bits);
             Packet::Operation(Operation {
                 version,
                 type_id,
@@ -116,8 +112,8 @@ fn parse_packet(mut raw_packet: &mut Vec<char>) -> Packet {
             })
         } else {
             // parse total sub-packets operator packet
-            let n_packets = take_n(&mut raw_packet, 11);
-            let packets = parse_n_packets(&mut raw_packet, n_packets);
+            let n_packets = take_n(raw_packet, 11);
+            let packets = parse_n_packets(raw_packet, n_packets);
             Packet::Operation(Operation {
                 version,
                 type_id,

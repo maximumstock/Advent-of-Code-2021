@@ -120,14 +120,14 @@ impl FromStr for Line {
             .unwrap()
             .trim()
             .split_whitespace()
-            .map(|s| sort_str(s))
+            .map(sort_str)
             .collect::<Vec<String>>();
         let outputs = parts
             .next()
             .unwrap()
             .trim()
             .split_whitespace()
-            .map(|s| sort_str(s))
+            .map(sort_str)
             .collect::<Vec<String>>();
 
         Ok(Self { inputs, outputs })
